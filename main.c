@@ -360,105 +360,162 @@ float disc_mode(float series[][2], int size) // to find mode for discrete series
     return mode;
 }
 
+float ind_hm_mean(float series[], int size)
+{
+    float sum = 0, hmean;
+    for (int i = 0; i < size; i++)
+    {
+        sum += 1 / series[i];
+    }
+    hmean = size / sum;
+    return hmean;
+}
+
+float disc_hm_mean(float series[][2], int size)
+{
+    float sum = 0, hmean, sigmaf = 0;
+    for (int i = 0; i < size; i++)
+    {
+        sum += series[i][1] / series[i][0];
+        sigmaf += series[i][1];
+    }
+    hmean = sigmaf / sum;
+    return hmean;
+}
+
 int main()
 {
-    int opt, ser, elm;
-    float mean, median, mode;
+    int opt, ser, elm, runagain;
+    float mean, median, mode, harmonic_mean;
     printf("------Basic Statistical Operations-----------------\n");
-
-    printf("Which Type of Series?\n1.) Individual\n2.) Discrete\n");
-    scanf("%d", &ser);
-
-    printf("How many elements?\n");
-    scanf("%d", &elm);
-
-    float ind_ser[elm];
-    float disc_ser[elm][2];
-
-    // In first switch we are accepting the data from user and storing it in a array
-    switch (ser)
+    do
     {
-    case 1:
-        printf("Enter the Elements of the Series: (x)\n");
-        for (int i = 0; i < elm; i++)
-        {
-            printf("Enter the value of X: (%d) element\n", i + 1);
-            scanf("%f", &ind_ser[i]);
-        }
-        break;
+        printf("Which Type of Series?\n1.) Individual\n2.) Discrete\n");
+        scanf("%d", &ser);
 
-    case 2:
-        printf("First Enter The Element and Then Its Frequency:(x-f) \n");
-        for (int i = 0; i < elm; i++)
-        {
-            printf("Enter the value of X: (%d) element\n", i + 1);
-            scanf("%f", &disc_ser[i][0]); // for X
-            printf("Enter the value of F: (%d) element\n", i + 1);
-            scanf("%f", &disc_ser[i][1]); // for F
-        }
-        break;
+        printf("How many elements?\n");
+        scanf("%d", &elm);
 
-    default:
-        printf("Invalid Option For Type Series :(\n");
-        break;
-    }
+        float ind_ser[elm];
+        float disc_ser[elm][2];
 
-    if (ser == 1 || ser == 2)
-    {
-        printf("What you wanna do?\n1.) Mean\n2.) Median\n3.) Mode\n");
-        scanf("%d", &opt);
-
-        // In this switch we are performing statistical operations on the data
-        switch (opt)
+        // In first switch we are accepting the data from user and storing it in a array
+        switch (ser)
         {
         case 1:
-            if (ser == 1)
+            printf("Enter the Elements of the Series: (x)\n");
+            for (int i = 0; i < elm; i++)
             {
-                mean = ind_mean(ind_ser, elm);
-                printf("The mean is %f\n", mean);
+                printf("Enter the value of X: (%d) element\n", i + 1);
+                scanf("%f", &ind_ser[i]);
             }
-
-            else if (ser == 2)
-            {
-                mean = disc_mean(disc_ser, elm);
-                printf("The mean is %f\n", mean);
-            }
-
             break;
 
         case 2:
-            if (ser == 1)
+            printf("First Enter The Element and Then Its Frequency:(x-f) \n");
+            for (int i = 0; i < elm; i++)
             {
-                median = ind_median(ind_ser, elm);
-                printf("The median is %f\n", median);
-            }
-
-            else if (ser == 2)
-            {
-                median = disc_median(disc_ser, elm);
-                printf("The median is %f\n", median);
-            }
-            break;
-
-        case 3:
-            if (ser == 1)
-            {
-                mode = ind_mode(ind_ser, elm);
-                printf("The Mode is %f\n", mode);
-            }
-
-            else if (ser == 2)
-            {
-                mode = disc_mode(disc_ser, elm);
-                printf("The Mode is %f\n", mode);
+                printf("Enter the value of X: (%d) element\n", i + 1);
+                scanf("%f", &disc_ser[i][0]); // for X
+                printf("Enter the value of F: (%d) element\n", i + 1);
+                scanf("%f", &disc_ser[i][1]); // for F
             }
             break;
 
         default:
-            printf("Invalid Option for Type Operation :( \n");
+            printf("Invalid Option For Type Series :(\n");
             break;
         }
-    }
+
+        if (ser == 1 || ser == 2)
+        {
+            printf("What you wanna do?\n1.) Arithmetic Mean\n2.) Median\n3.) Mode\n4.) Harmonic Mean\n");
+            scanf("%d", &opt);
+
+            // In this switch we are performing statistical operations on the data
+            switch (opt)
+            {
+            case 1:
+                if (ser == 1)
+                {
+                    mean = ind_mean(ind_ser, elm);
+                    printf("The mean is %f\n", mean);
+                }
+
+                else if (ser == 2)
+                {
+                    mean = disc_mean(disc_ser, elm);
+                    printf("The mean is %f\n", mean);
+                }
+
+                break;
+
+            case 2:
+                if (ser == 1)
+                {
+                    median = ind_median(ind_ser, elm);
+                    printf("The median is %f\n", median);
+                }
+
+                else if (ser == 2)
+                {
+                    median = disc_median(disc_ser, elm);
+                    printf("The median is %f\n", median);
+                }
+                break;
+
+            case 3:
+                if (ser == 1)
+                {
+                    mode = ind_mode(ind_ser, elm);
+                    printf("The Mode is %f\n", mode);
+                }
+
+                else if (ser == 2)
+                {
+                    mode = disc_mode(disc_ser, elm);
+                    printf("The Mode is %f\n", mode);
+                }
+                break;
+
+            case 4:
+                if (ser == 1)
+                {
+                    harmonic_mean = ind_hm_mean(ind_ser, elm);
+                    printf("The Harmonic Mean is %f\n", harmonic_mean);
+                }
+
+                else if (ser == 2)
+                {
+                    harmonic_mean = disc_hm_mean(disc_ser, elm);
+                    printf("The Harmonic Mean is %f\n", harmonic_mean);
+                }
+                break;
+
+            default:
+                printf("Invalid Option for Type Operation :( \n");
+                break;
+            }
+        }
+        do
+        {
+            printf("Wanna run again?: yes/no (1/0):\n");
+            scanf("%d", &runagain);
+            if (runagain == 1 || runagain == 0)
+            {
+                if (runagain == 0)
+                {
+                    printf("Goodbye! :)\n");
+                }
+            }
+            else
+            {
+                printf("Invalid option Input only (1/0): \n");
+                runagain = 2;
+            }
+        } while (runagain == 2);
+
+    } while (runagain != 0);
 
     getch();
     return 0;
