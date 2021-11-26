@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <conio.h>
+#include <math.h>
 
 float ind_mean(float series[], int size) // sigma X / n
 {
@@ -21,6 +22,19 @@ float disc_mean(float series[][2], int size) // sigma Fx/ sigma F
         sigmaf += series[i][1];
     }
     mean = sum / sigmaf;
+    return mean;
+}
+
+float con_mean(float series[][3], int size)
+{
+    float mean, disc_ser_con[size][2];
+    for (int i = 0; i < size; i++)
+    {
+        disc_ser_con[i][0] = (series[i][0] + series[i][1]) / 2; // m = l+u/2
+        disc_ser_con[i][1] = series[i][2];                      // f
+    }
+
+    mean = disc_mean(disc_ser_con, size);
     return mean;
 }
 
@@ -99,6 +113,56 @@ float disc_median(float series[][2], int size)
         }
     }
     median = series[cf_ind][0];
+    return median;
+}
+
+float con_median(float series[][3], int size)
+{
+    float temp, median, temp_freq, cf_class, tempU;
+    int cf[size], cf_ind;
+    float sigmaf = 0, L, f, cff, lu;
+
+    // logic to convert the series into ascending order
+    for (int i = 0; i < size; i++)
+    {
+        for (int j = i + 1; j < size; j++)
+        {
+            if (series[i][0] > series[j][0])
+            {
+                temp = series[i][0];
+                temp_freq = series[i][2];
+                tempU = series[i][1];
+
+                series[i][0] = series[j][0];
+                series[i][1] = series[j][1];
+                series[i][2] = series[j][2];
+
+                series[j][0] = temp;
+                series[j][2] = temp_freq;
+                series[j][1] = tempU;
+            }
+        }
+    }
+    for (int i = 0; i < size; i++)
+    {
+        sigmaf += series[i][2];
+        cf[i] = sigmaf;
+    }
+    cf_class = sigmaf / 2;
+
+    for (int i = 0; i < size; i++)
+    {
+        if (cf[i] >= cf_class)
+        {
+            L = series[i][0];
+            cff = (i >= 1) ? cf[i - 1] : 0;
+            f = series[i][2];
+            lu = series[i][1] - L;
+            break;
+        }
+    }
+ 
+    median = L + ((cf_class - cff)/f)*lu;
     return median;
 }
 
@@ -360,6 +424,10 @@ float disc_mode(float series[][2], int size) // to find mode for discrete series
     return mode;
 }
 
+float con_mode(float series[][3], int size)
+{
+}
+
 float ind_hm_mean(float series[], int size)
 {
     float sum = 0, hmean;
@@ -383,14 +451,67 @@ float disc_hm_mean(float series[][2], int size)
     return hmean;
 }
 
+float con_hm_mean(float series[][3], int size)
+{
+    float hmean, disc_ser_con[size][2];
+    for (int i = 0; i < size; i++)
+    {
+        disc_ser_con[i][0] = (series[i][0] + series[i][1]) / 2; // m = l+u/2
+        disc_ser_con[i][1] = series[i][2];                      // f
+    }
+
+    hmean = disc_hm_mean(disc_ser_con, size);
+    return hmean;
+}
+
+float ind_gm_mean(float series[], int size)
+{
+    float gmean;
+    double sum = 0;
+
+    for (int i = 0; i < size; i++)
+    {
+        sum += log10(series[i]);
+    }
+    gmean = pow(10, (sum / size));
+    return gmean;
+}
+
+float disc_gm_mean(float series[][2], int size)
+{
+    float gmean, sigmaf = 0;
+    double sum = 0;
+
+    for (int i = 0; i < size; i++)
+    {
+        sum += series[i][1] * log10(series[i][0]); // f * log x
+        sigmaf += series[i][1];
+    }
+    gmean = pow(10, (sum / sigmaf));
+    return gmean;
+}
+
+float con_gm_mean(float series[][3], int size)
+{
+    float gmean, disc_ser_con[size][2];
+    for (int i = 0; i < size; i++)
+    {
+        disc_ser_con[i][0] = (series[i][0] + series[i][1]) / 2; // m = l+u/2
+        disc_ser_con[i][1] = series[i][2];                      // f
+    }
+
+    gmean = disc_gm_mean(disc_ser_con, size);
+    return gmean;
+}
+
 int main()
 {
     int opt, ser, elm, runagain;
-    float mean, median, mode, harmonic_mean;
+    float mean, median, mode, harmonic_mean, geometric_mean;
     printf("------Basic Statistical Operations-----------------\n");
     do
     {
-        printf("Which Type of Series?\n1.) Individual\n2.) Discrete\n");
+        printf("Which Type of Series?\n1.) Individual\n2.) Discrete\n3.) Continuous Series\n");
         scanf("%d", &ser);
 
         printf("How many elements?\n");
@@ -398,6 +519,7 @@ int main()
 
         float ind_ser[elm];
         float disc_ser[elm][2];
+        float con_ser[elm][3];
 
         // In first switch we are accepting the data from user and storing it in a array
         switch (ser)
@@ -406,7 +528,6 @@ int main()
             printf("Enter the Elements of the Series: (x)\n");
             for (int i = 0; i < elm; i++)
             {
-                printf("Enter the value of X: (%d) element\n", i + 1);
                 scanf("%f", &ind_ser[i]);
             }
             break;
@@ -415,10 +536,23 @@ int main()
             printf("First Enter The Element and Then Its Frequency:(x-f) \n");
             for (int i = 0; i < elm; i++)
             {
-                printf("Enter the value of X: (%d) element\n", i + 1);
+                printf("X: (%d)\n", i + 1);
                 scanf("%f", &disc_ser[i][0]); // for X
-                printf("Enter the value of F: (%d) element\n", i + 1);
+                printf("F: (%d)\n", i + 1);
                 scanf("%f", &disc_ser[i][1]); // for F
+            }
+            break;
+
+        case 3:
+            printf("Lower Limit - Upper Limit - Frequency\n");
+            for (int i = 0; i < elm; i++)
+            {
+                printf("Lower Limit: (%d)\n", i + 1);
+                scanf("%f", &con_ser[i][0]); // for L
+                printf("Upper Limit: (%d)\n", i + 1);
+                scanf("%f", &con_ser[i][1]); // for U
+                printf("Frequency: (%d)\n", i + 1);
+                scanf("%f", &con_ser[i][2]); // for F
             }
             break;
 
@@ -427,9 +561,9 @@ int main()
             break;
         }
 
-        if (ser == 1 || ser == 2)
+        if (ser == 1 || ser == 2 || ser == 3)
         {
-            printf("What you wanna do?\n1.) Arithmetic Mean\n2.) Median\n3.) Mode\n4.) Harmonic Mean\n");
+            printf("What you wanna do?\n1.) Arithmetic Mean\n2.) Median\n3.) Mode\n4.) Harmonic Mean\n5.) Geometric Mean\n");
             scanf("%d", &opt);
 
             // In this switch we are performing statistical operations on the data
@@ -448,6 +582,12 @@ int main()
                     printf("The mean is %f\n", mean);
                 }
 
+                else if (ser == 3)
+                {
+                    mean = con_mean(con_ser, elm);
+                    printf("The mean is %f\n", mean);
+                }
+
                 break;
 
             case 2:
@@ -461,6 +601,12 @@ int main()
                 {
                     median = disc_median(disc_ser, elm);
                     printf("The median is %f\n", median);
+                }
+
+                else if (ser == 3)
+                {
+                    median = con_median(con_ser, elm);
+                    printf("The Median is %f\n", median);
                 }
                 break;
 
@@ -476,6 +622,12 @@ int main()
                     mode = disc_mode(disc_ser, elm);
                     printf("The Mode is %f\n", mode);
                 }
+
+                else if (ser == 3)
+                {
+                    mode = con_mode(con_ser, elm);
+                    printf("The Mode is %f\n", mode);
+                }
                 break;
 
             case 4:
@@ -489,6 +641,32 @@ int main()
                 {
                     harmonic_mean = disc_hm_mean(disc_ser, elm);
                     printf("The Harmonic Mean is %f\n", harmonic_mean);
+                }
+
+                else if (ser == 3)
+                {
+                    harmonic_mean = con_hm_mean(con_ser, elm);
+                    printf("The Harmonic Mean is %f\n", harmonic_mean);
+                }
+                break;
+
+            case 5:
+                if (ser == 1)
+                {
+                    geometric_mean = ind_gm_mean(ind_ser, elm);
+                    printf("The Geometric Mean is %f\n", geometric_mean);
+                }
+
+                else if (ser == 2)
+                {
+                    geometric_mean = disc_gm_mean(disc_ser, elm);
+                    printf("The Geometric Mean is %f\n", geometric_mean);
+                }
+
+                else if (ser == 3)
+                {
+                    geometric_mean = con_gm_mean(con_ser, elm);
+                    printf("The Geometric Mean is %f\n", geometric_mean);
                 }
                 break;
 
