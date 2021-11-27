@@ -38,10 +38,10 @@ float con_mean(float series[][3], int size)
     return mean;
 }
 
-float ind_median(float series[], int size)
+float ind_quartile(float series[], int size, float value)
 {
-    float temp, median;
-    int med_index;
+    float temp, median, med_index, decimal_part; // ignore the name median this function is for median , q1, q3
+    int int_part;
 
     // logic to convert the series into ascending order
     for (int i = 0; i < size; i++)
@@ -57,21 +57,15 @@ float ind_median(float series[], int size)
         }
     }
 
-    if (size % 2 != 0) // if elements are odd // n+1/2 th element
-    {
-        med_index = (size + 1) / 2;
-        median = series[med_index - 1];
-    }
-
-    else // if elements are even n/2th n/2 +1
-    {
-        med_index = size / 2;
-        median = (series[med_index - 1] + series[med_index]) / 2;
-    }
+    med_index = (size + 1)*value;
+    int_part = (int)med_index;
+    decimal_part = med_index - int_part;
+  
+    median = series[int_part-1] + (decimal_part * (series[int_part] - series[int_part-1]));
     return median;
 }
 
-float disc_median(float series[][2], int size)
+float disc_quartile(float series[][2], int size, float value)
 {
     float temp, median, temp_freq, cf_class;
     int cf[size], cf_ind;
@@ -101,14 +95,13 @@ float disc_median(float series[][2], int size)
         cf[i] = sigmaf;
     }
 
-    cf_class = (sigmaf + 1) / 2;
+    cf_class = (sigmaf + 1)*value;
 
     for (int i = 0; i < size; i++)
     {
         if (cf_class <= cf[i])
         {
             cf_ind = i;
-            printf("%d ", cf_ind);
             break;
         }
     }
@@ -116,7 +109,7 @@ float disc_median(float series[][2], int size)
     return median;
 }
 
-float con_median(float series[][3], int size)
+float con_quartile(float series[][3], int size, float value)
 {
     float temp, median, temp_freq, cf_class, tempU;
     int cf[size], cf_ind;
@@ -148,7 +141,7 @@ float con_median(float series[][3], int size)
         sigmaf += series[i][2];
         cf[i] = sigmaf;
     }
-    cf_class = sigmaf / 2;
+    cf_class = sigmaf * value;
 
     for (int i = 0; i < size; i++)
     {
@@ -161,8 +154,8 @@ float con_median(float series[][3], int size)
             break;
         }
     }
- 
-    median = L + ((cf_class - cff)/f)*lu;
+
+    median = L + ((cf_class - cff) / f) * lu;
     return median;
 }
 
@@ -208,7 +201,7 @@ float ind_mode(float series[], int size) // calculating mode for individual seri
     else
     { // mode = 3 median - 2 mean
         mean = ind_mean(series, size);
-        median = ind_median(series, size);
+        median = ind_quartile(series, size, 0.5);
         mode = (3 * median) - (2 * mean);
     }
     return mode;
@@ -426,6 +419,7 @@ float disc_mode(float series[][2], int size) // to find mode for discrete series
 
 float con_mode(float series[][3], int size)
 {
+    return 0;
 }
 
 float ind_hm_mean(float series[], int size)
@@ -506,8 +500,8 @@ float con_gm_mean(float series[][3], int size)
 
 int main()
 {
-    int opt, ser, elm, runagain;
-    float mean, median, mode, harmonic_mean, geometric_mean;
+    int ser, elm, runagain, ops;
+    float mean, median, mode, harmonic_mean, geometric_mean, q1, q3;
     printf("------Basic Statistical Operations-----------------\n");
     do
     {
@@ -563,116 +557,167 @@ int main()
 
         if (ser == 1 || ser == 2 || ser == 3)
         {
-            printf("What you wanna do?\n1.) Arithmetic Mean\n2.) Median\n3.) Mode\n4.) Harmonic Mean\n5.) Geometric Mean\n");
-            scanf("%d", &opt);
-
-            // In this switch we are performing statistical operations on the data
-            switch (opt)
+            printf("How many operations you wanna perform. Please Specify:\n");
+            scanf("%d", &ops);
+            int operations[ops];
+            printf("\n1.) Arithmetic Mean\n2.) Median\n3.) Mode\n4.) Harmonic Mean\n5.) Geometric Mean\n");
+            printf("6.) Quartile 1(Q1)\n7.) Quartile 3(Q3)\n");
+            for (int i = 0; i < ops; i++)
             {
-            case 1:
-                if (ser == 1)
+                scanf("%d", &operations[i]);
+            }
+            printf("Calculating.......\n");
+            // In this switch we are performing statistical operations on the data
+            for (int i = 0; i < ops; i++)
+            {
+                switch (operations[i])
                 {
-                    mean = ind_mean(ind_ser, elm);
-                    printf("The mean is %f\n", mean);
+                case 1:
+                    if (ser == 1)
+                    {
+                        mean = ind_mean(ind_ser, elm);
+                        printf("The mean is %f\n", mean);
+                    }
+
+                    else if (ser == 2)
+                    {
+                        mean = disc_mean(disc_ser, elm);
+                        printf("The mean is %f\n", mean);
+                    }
+
+                    else if (ser == 3)
+                    {
+                        mean = con_mean(con_ser, elm);
+                        printf("The mean is %f\n", mean);
+                    }
+
+                    break;
+
+                case 2:
+                    if (ser == 1)
+                    {
+                        median = ind_quartile(ind_ser, elm, 0.5);
+                        printf("The median is %f\n", median);
+                    }
+
+                    else if (ser == 2)
+                    {
+                        median = disc_quartile(disc_ser, elm, 0.5);
+                        printf("The median is %f\n", median);
+                    }
+
+                    else if (ser == 3)
+                    {
+                        median = con_quartile(con_ser, elm, 0.5);
+                        printf("The Median is %f\n", median);
+                    }
+                    break;
+
+                case 3:
+                    if (ser == 1)
+                    {
+                        mode = ind_mode(ind_ser, elm);
+                        printf("The Mode is %f\n", mode);
+                    }
+
+                    else if (ser == 2)
+                    {
+                        mode = disc_mode(disc_ser, elm);
+                        printf("The Mode is %f\n", mode);
+                    }
+
+                    else if (ser == 3)
+                    {
+                        mode = con_mode(con_ser, elm);
+                        printf("Sorry Mode for continuous series ain't working!");
+                        printf("The Mode is %f\n", mode);
+                    }
+                    break;
+
+                case 4:
+                    if (ser == 1)
+                    {
+                        harmonic_mean = ind_hm_mean(ind_ser, elm);
+                        printf("The Harmonic Mean is %f\n", harmonic_mean);
+                    }
+
+                    else if (ser == 2)
+                    {
+                        harmonic_mean = disc_hm_mean(disc_ser, elm);
+                        printf("The Harmonic Mean is %f\n", harmonic_mean);
+                    }
+
+                    else if (ser == 3)
+                    {
+                        harmonic_mean = con_hm_mean(con_ser, elm);
+                        printf("The Harmonic Mean is %f\n", harmonic_mean);
+                    }
+                    break;
+
+                case 5:
+                    if (ser == 1)
+                    {
+                        geometric_mean = ind_gm_mean(ind_ser, elm);
+                        printf("The Geometric Mean is %f\n", geometric_mean);
+                    }
+
+                    else if (ser == 2)
+                    {
+                        geometric_mean = disc_gm_mean(disc_ser, elm);
+                        printf("The Geometric Mean is %f\n", geometric_mean);
+                    }
+
+                    else if (ser == 3)
+                    {
+                        geometric_mean = con_gm_mean(con_ser, elm);
+                        printf("The Geometric Mean is %f\n", geometric_mean);
+                    }
+                    break;
+
+                case 6:
+                    if (ser == 1)
+                    {
+                        q1 = ind_quartile(ind_ser, elm, 0.25);
+                        printf("The Quartile 1(Q1) is %f\n", q1);
+                    }
+
+                    else if (ser == 2)
+                    {
+                        q1 = disc_quartile(disc_ser, elm, 0.25);
+                        printf("The Quartile 1(Q1) is %f\n", q1);
+                    }
+
+                    else if (ser == 3)
+                    {
+                        q1 = con_quartile(con_ser, elm, 0.25);
+                        printf("The Quartile 1(Q1) is %f\n", q1);
+                    }
+                    break;
+
+                case 7:
+                    if (ser == 1)
+                    {
+                        q3 = ind_quartile(ind_ser, elm, 0.75);
+                        printf("The Quartile 3(Q3) is %f\n", q3);
+                    }
+
+                    else if (ser == 2)
+                    {
+                        q3 = disc_quartile(disc_ser, elm, 0.75);
+                        printf("The Quartile 3(Q3) is %f\n", q3);
+                    }
+
+                    else if (ser == 3)
+                    {
+                        q3 = con_quartile(con_ser, elm, 0.75);
+                        printf("The Quartile 3(Q3) is %f\n", q3);
+                    }
+                    break;
+
+                default:
+                    printf("Invalid Option for Type Operation :( \n");
+                    break;
                 }
-
-                else if (ser == 2)
-                {
-                    mean = disc_mean(disc_ser, elm);
-                    printf("The mean is %f\n", mean);
-                }
-
-                else if (ser == 3)
-                {
-                    mean = con_mean(con_ser, elm);
-                    printf("The mean is %f\n", mean);
-                }
-
-                break;
-
-            case 2:
-                if (ser == 1)
-                {
-                    median = ind_median(ind_ser, elm);
-                    printf("The median is %f\n", median);
-                }
-
-                else if (ser == 2)
-                {
-                    median = disc_median(disc_ser, elm);
-                    printf("The median is %f\n", median);
-                }
-
-                else if (ser == 3)
-                {
-                    median = con_median(con_ser, elm);
-                    printf("The Median is %f\n", median);
-                }
-                break;
-
-            case 3:
-                if (ser == 1)
-                {
-                    mode = ind_mode(ind_ser, elm);
-                    printf("The Mode is %f\n", mode);
-                }
-
-                else if (ser == 2)
-                {
-                    mode = disc_mode(disc_ser, elm);
-                    printf("The Mode is %f\n", mode);
-                }
-
-                else if (ser == 3)
-                {
-                    mode = con_mode(con_ser, elm);
-                    printf("The Mode is %f\n", mode);
-                }
-                break;
-
-            case 4:
-                if (ser == 1)
-                {
-                    harmonic_mean = ind_hm_mean(ind_ser, elm);
-                    printf("The Harmonic Mean is %f\n", harmonic_mean);
-                }
-
-                else if (ser == 2)
-                {
-                    harmonic_mean = disc_hm_mean(disc_ser, elm);
-                    printf("The Harmonic Mean is %f\n", harmonic_mean);
-                }
-
-                else if (ser == 3)
-                {
-                    harmonic_mean = con_hm_mean(con_ser, elm);
-                    printf("The Harmonic Mean is %f\n", harmonic_mean);
-                }
-                break;
-
-            case 5:
-                if (ser == 1)
-                {
-                    geometric_mean = ind_gm_mean(ind_ser, elm);
-                    printf("The Geometric Mean is %f\n", geometric_mean);
-                }
-
-                else if (ser == 2)
-                {
-                    geometric_mean = disc_gm_mean(disc_ser, elm);
-                    printf("The Geometric Mean is %f\n", geometric_mean);
-                }
-
-                else if (ser == 3)
-                {
-                    geometric_mean = con_gm_mean(con_ser, elm);
-                    printf("The Geometric Mean is %f\n", geometric_mean);
-                }
-                break;
-
-            default:
-                printf("Invalid Option for Type Operation :( \n");
-                break;
             }
         }
         do
