@@ -25,7 +25,7 @@ float disc_mean(float series[][2], int size) // sigma Fx/ sigma F
     return mean;
 }
 
-float con_mean(float series[][3], int size)
+float con_mean(float series[][3], int size) // sigma fm/sigma f..
 {
     float mean, disc_ser_con[size][2];
     for (int i = 0; i < size; i++)
@@ -38,7 +38,7 @@ float con_mean(float series[][3], int size)
     return mean;
 }
 
-float ind_quartile(float series[], int size, float value)
+float ind_quartile(float series[], int size, float value) // median = q2, so we can calculate q1,q2,q3 using just 1 function
 {
     float temp, median, med_index, decimal_part; // ignore the name median this function is for median , q1, q3
     int int_part;
@@ -422,7 +422,7 @@ float con_mode(float series[][3], int size)
     return 0;
 }
 
-float ind_hm_mean(float series[], int size)
+float ind_hm_mean(float series[], int size) // harmonic mean
 {
     float sum = 0, hmean;
     for (int i = 0; i < size; i++)
@@ -458,7 +458,7 @@ float con_hm_mean(float series[][3], int size)
     return hmean;
 }
 
-float ind_gm_mean(float series[], int size)
+float ind_gm_mean(float series[], int size) // geometric mean = sigma LOG x / N
 {
     float gmean;
     double sum = 0;
