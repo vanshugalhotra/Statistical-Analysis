@@ -57,11 +57,11 @@ float ind_quartile(float series[], int size, float value) // median = q2, so we 
         }
     }
 
-    med_index = (size + 1)*value;
+    med_index = (size + 1) * value;
     int_part = (int)med_index;
     decimal_part = med_index - int_part;
-  
-    median = series[int_part-1] + (decimal_part * (series[int_part] - series[int_part-1]));
+
+    median = series[int_part - 1] + (decimal_part * (series[int_part] - series[int_part - 1]));
     return median;
 }
 
@@ -95,7 +95,7 @@ float disc_quartile(float series[][2], int size, float value)
         cf[i] = sigmaf;
     }
 
-    cf_class = (sigmaf + 1)*value;
+    cf_class = (sigmaf + 1) * value;
 
     for (int i = 0; i < size; i++)
     {
@@ -498,10 +498,264 @@ float con_gm_mean(float series[][3], int size)
     return gmean;
 }
 
+float *ind_range(float series[], int size) // this function return array of highest and lowest values
+{
+    static float range[2];
+    float temp;
+    // logic to convert the series into ascending order
+    for (int i = 0; i < size; i++)
+    {
+        for (int j = i + 1; j < size; j++)
+        {
+            if (series[i] > series[j])
+            {
+                temp = series[i];
+                series[i] = series[j];
+                series[j] = temp;
+            }
+        }
+    }
+
+    range[0] = series[size - 1];
+    range[1] = series[0];
+    return range;
+}
+
+float *disc_range(float series[][2], int size)
+{
+    static float range[2];
+    float temp, temp_freq;
+    // logic to convert the series into ascending order
+    for (int i = 0; i < size; i++)
+    {
+        for (int j = i + 1; j < size; j++)
+        {
+            if (series[i][0] > series[j][0])
+            {
+                temp = series[i][0];
+                temp_freq = series[i][1];
+
+                series[i][0] = series[j][0];
+                series[i][1] = series[j][1];
+
+                series[j][0] = temp;
+                series[j][1] = temp_freq;
+            }
+        }
+    }
+    range[0] = series[size - 1][0];
+    range[1] = series[0][0];
+    return range;
+}
+
+float *con_range(float series[][3], int size) // answer may differ if series is inclusive
+{
+    static float range[2];
+    float temp, temp_freq, tempU;
+    // logic to convert the series into ascending order
+    for (int i = 0; i < size; i++)
+    {
+        for (int j = i + 1; j < size; j++)
+        {
+            if (series[i][0] > series[j][0])
+            {
+                temp = series[i][0];
+                temp_freq = series[i][2];
+                tempU = series[i][1];
+
+                series[i][0] = series[j][0];
+                series[i][1] = series[j][1];
+                series[i][2] = series[j][2];
+
+                series[j][0] = temp;
+                series[j][2] = temp_freq;
+                series[j][1] = tempU;
+            }
+        }
+    }
+    range[0] = series[size - 1][1];
+    range[1] = series[0][0];
+    return range;
+}
+
+float *ind_mean_deviation(float series[], int size)
+{
+    static float mean_deviation[6];
+    float mean, median, mode, mean_ser[size], median_ser[size], mode_ser[size], sigmaf_mean, sigmaf_med, sigmaf_mode;
+
+    mean = ind_mean(series, size);
+    median = ind_quartile(series, size, 0.5);
+    mode = ind_mode(series, size);
+
+    for (int i = 0; i < size; i++)
+    {
+        mean_ser[i] = fabs(series[i] - mean);
+        median_ser[i] = fabs(series[i] - median);
+        mode_ser[i] = fabs(series[i] - mode);
+    }
+    sigmaf_mean = sigmaf_med = sigmaf_mode = 0;
+    for (int i = 0; i < size; i++)
+    {
+        sigmaf_mean += mean_ser[i];
+        sigmaf_med += median_ser[i];
+        sigmaf_mode += mode_ser[i];
+    }
+    mean_deviation[0] = sigmaf_mean / size;
+    mean_deviation[1] = sigmaf_med / size;
+    mean_deviation[2] = sigmaf_mode / size;
+
+    mean_deviation[3] = mean_deviation[0] / mean;   // coefficient
+    mean_deviation[4] = mean_deviation[1] / median; // coefficient
+    mean_deviation[5] = mean_deviation[2] / mode;   // coefficient
+    return mean_deviation;
+}
+
+float *disc_mean_deviation(float series[][2], int size)
+{
+    static float mean_deviation[6];
+    float mean, median, mode, mean_ser[size][2], median_ser[size][2], mode_ser[size][2];
+    float sigmaf, sigmaf_mean, sigmaf_med, sigmaf_mode;
+
+    mean = disc_mean(series, size);
+    median = disc_quartile(series, size, 0.5);
+    mode = disc_mode(series, size);
+
+    for (int i = 0; i < size; i++)
+    {
+        mean_ser[i][0] = fabs(series[i][0] - mean);
+        median_ser[i][0] = fabs(series[i][0] - median);
+        mode_ser[i][0] = fabs(series[i][0] - mode);
+    }
+    sigmaf_mean = sigmaf_med = sigmaf_mode = sigmaf = 0;
+    for (int i = 0; i < size; i++)
+    {
+        sigmaf_mean += mean_ser[i][0] * series[i][1];
+        sigmaf_med += median_ser[i][0] * series[i][1];
+        sigmaf_mode += mode_ser[i][0] * series[i][1];
+        sigmaf += series[i][1];
+    }
+    mean_deviation[0] = sigmaf_mean / sigmaf;
+    mean_deviation[1] = sigmaf_med / sigmaf;
+    mean_deviation[2] = sigmaf_mode / sigmaf;
+
+    mean_deviation[3] = mean_deviation[0] / mean;   // coefficient
+    mean_deviation[4] = mean_deviation[1] / median; // coefficient
+    mean_deviation[5] = mean_deviation[2] / mode;   // coefficient
+    return mean_deviation;
+}
+
+float *con_mean_deviation(float series[][3], int size)
+{
+    static float mean_deviation[6];
+    float mean, median, mean_ser[size][3], median_ser[size][3];
+    float sigmaf, sigmaf_mean, sigmaf_med, cofmean, cofmed;
+
+    mean = con_mean(series, size);
+    median = con_quartile(series, size, 0.5);
+
+    for (int i = 0; i < size; i++)
+    {
+        mean_ser[i][0] = fabs((series[i][1] + series[i][0]) / 2 - mean);
+        median_ser[i][0] = fabs((series[i][1] + series[i][0]) / 2 - median);
+    }
+    sigmaf_mean = sigmaf_med = sigmaf = 0;
+    for (int i = 0; i < size; i++)
+    {
+        sigmaf_mean += mean_ser[i][0] * series[i][2];
+        sigmaf_med += median_ser[i][0] * series[i][2];
+        sigmaf += series[i][2];
+    }
+    mean_deviation[0] = sigmaf_mean / sigmaf;
+    mean_deviation[1] = sigmaf_med / sigmaf;
+    mean_deviation[2] = 0; // cant calculate for mode rn
+
+    mean_deviation[3] = mean_deviation[0] / mean;   // coefficient
+    mean_deviation[4] = mean_deviation[1] / median; // coefficient
+    mean_deviation[5] = 0;                          // coefficient
+
+    return mean_deviation;
+}
+
+float *ind_standard_deviation(float series[], int size)
+{
+    static float standard_deviation[2];
+    float sd, cofsd, xsquare[size], var, sigmax, sigmaxx, mean;
+
+    mean = ind_mean(series, size);
+
+    for (int i = 0; i < size; i++)
+    {
+        xsquare[i] = series[i] * series[i]; // x square
+    }
+    sigmax = sigmaxx = 0;
+    for (int i = 0; i < size; i++)
+    {
+        sigmax += series[i];
+        sigmaxx += xsquare[i];
+    }
+
+    var = (sigmaxx / size) - ((sigmax / size) * (sigmax / size));
+    standard_deviation[0] = sqrt(var);
+    standard_deviation[1] = standard_deviation[0] / mean;
+    return standard_deviation;
+}
+
+float *disc_standard_deviation(float series[][2], int size)
+{
+    static float standard_deviation[2];
+    float sd, cofsd, fxsquare[size], var, sigmaf, sigmaxx, sigmafx, mean;
+
+    mean = disc_mean(series, size);
+
+    for (int i = 0; i < size; i++)
+    {
+        fxsquare[i] = (series[i][0] * series[i][0]) * series[i][1]; // f * x square
+    }
+    sigmaf = sigmaxx = sigmafx = 0;
+    for (int i = 0; i < size; i++)
+    {
+        sigmaf += series[i][1];
+        sigmaxx += fxsquare[i];
+        sigmafx += series[i][0] * series[i][1];
+    }
+
+    var = (sigmaxx / sigmaf) - ((sigmafx / sigmaf) * (sigmafx / sigmaf));
+    standard_deviation[0] = sqrt(var);
+    standard_deviation[1] = standard_deviation[0] / mean;
+    return standard_deviation;
+}
+
+float *con_standard_deviation(float series[][3], int size)
+{
+    static float standard_deviation[2];
+    float sd, cofsd, fxsquare[size], var, sigmaf, sigmaxx, sigmafx, mean;
+
+    mean = con_mean(series, size);
+
+    for (int i = 0; i < size; i++)
+    {
+        fxsquare[i] = (((series[i][0] + series[i][1]) / 2) * ((series[i][0] + series[i][1]) / 2)) * series[i][2]; // f*m2
+    }
+    sigmaf = sigmaxx = sigmafx = 0;
+    for (int i = 0; i < size; i++)
+    {
+        sigmaf += series[i][2];
+        sigmaxx += fxsquare[i];
+        sigmafx += ((series[i][0] + series[i][1]) / 2) * series[i][2];
+    }
+
+    var = (sigmaxx / sigmaf) - ((sigmafx / sigmaf) * (sigmafx / sigmaf));
+    standard_deviation[0] = sqrt(var);
+    standard_deviation[1] = standard_deviation[0] / mean;
+    return standard_deviation;
+}
+
 int main()
 {
     int ser, elm, runagain, ops;
-    float mean, median, mode, harmonic_mean, geometric_mean, q1, q3;
+    float mean, median, mode, harmonic_mean, geometric_mean, q1, q3, rang, qrang, cofrang, qq1, qq3;
+    float qrange, cofqrange;
+    float *range, *mean_deviation, *standard_deviation, *variance;
     printf("------Basic Statistical Operations-----------------\n");
     do
     {
@@ -561,7 +815,8 @@ int main()
             scanf("%d", &ops);
             int operations[ops];
             printf("\n1.) Arithmetic Mean\n2.) Median\n3.) Mode\n4.) Harmonic Mean\n5.) Geometric Mean\n");
-            printf("6.) Quartile 1(Q1)\n7.) Quartile 3(Q3)\n");
+            printf("6.) Quartile 1(Q1)\n7.) Quartile 3(Q3)\n8.) Range\n9.) Inter Quartile Range\n");
+            printf("10.) Mean Deviation\n11.) Standard Deviation\n12.) Variance\n");
             for (int i = 0; i < ops; i++)
             {
                 scanf("%d", &operations[i]);
@@ -711,6 +966,161 @@ int main()
                     {
                         q3 = con_quartile(con_ser, elm, 0.75);
                         printf("The Quartile 3(Q3) is %f\n", q3);
+                    }
+                    break;
+
+                case 8:
+                    if (ser == 1)
+                    {
+                        range = ind_range(ind_ser, elm);
+                        rang = range[0] - range[1];
+                        cofrang = rang / (range[0] + range[1]);
+
+                        printf("The Range is %f\n", rang);
+                        printf("The Coefficient of Range is %f\n", cofrang);
+                    }
+
+                    else if (ser == 2)
+                    {
+                        range = disc_range(disc_ser, elm);
+                        rang = range[0] - range[1];
+                        cofrang = rang / (range[0] + range[1]);
+
+                        printf("The Range is %f\n", rang);
+                        printf("The Coefficient of Range is %f\n", cofrang);
+                    }
+
+                    else if (ser == 3)
+                    {
+                        range = con_range(con_ser, elm);
+                        rang = range[0] - range[1];
+                        cofrang = rang / (range[0] + range[1]);
+
+                        printf("The Range is %f\n", rang);
+                        printf("The Coefficient of Range is %f\n", cofrang);
+                    }
+                    break;
+
+                case 9:
+                    if (ser == 1)
+                    {
+                        qq1 = ind_quartile(ind_ser, elm, 0.25);
+                        qq3 = ind_quartile(ind_ser, elm, 0.75);
+                        qrange = qq3 - qq1;
+                        cofqrange = qrange / (qq3 + qq1);
+
+                        printf("The Inter Quartile Range is %f\n", qrange);
+                        printf("The Quartile Deviation / Semi Inter Quartile Range is %f\n", qrange / 2);
+                        printf("The Coefficient of Quartile Deviation is %f\n", cofqrange);
+                    }
+
+                    else if (ser == 2)
+                    {
+                        qq1 = disc_quartile(disc_ser, elm, 0.25);
+                        qq3 = disc_quartile(disc_ser, elm, 0.75);
+                        qrange = qq3 - qq1;
+                        cofqrange = qrange / (qq3 + qq1);
+
+                        printf("The Inter Quartile Range is %f\n", qrange);
+                        printf("The Quartile Deviation / Semi Inter Quartile Range is %f\n", qrange / 2);
+                        printf("The Coefficient of Quartile Deviation is %f\n", cofqrange);
+                    }
+
+                    else if (ser == 3)
+                    {
+                        qq1 = con_quartile(con_ser, elm, 0.25);
+                        qq3 = con_quartile(con_ser, elm, 0.75);
+                        qrange = qq3 - qq1;
+                        cofqrange = qrange / (qq3 + qq1);
+
+                        printf("The Inter Quartile Range is %f\n", qrange);
+                        printf("The \tQuartile Deviation     OR    Semi Inter Quartile Range is %f\n", qrange / 2);
+                        printf("The Coefficient of Quartile Deviation is %f\n", cofqrange);
+                    }
+                    break;
+
+                case 10:
+                    if (ser == 1)
+                    {
+                        mean_deviation = ind_mean_deviation(ind_ser, elm);
+
+                        printf("The Mean Deviation From Mean is %f\n", mean_deviation[0]);
+                        printf("The Coefficient of Mean Deviation From Mean is %f\n", mean_deviation[3]);
+
+                        printf("The Mean Deviation From Median is %f\n", mean_deviation[1]);
+                        printf("The Coefficient of Mean Deviation From Median is %f\n", mean_deviation[4]);
+
+                        printf("The Mean Deviation From Mode is %f\n", mean_deviation[2]);
+                        printf("The Coefficient of Mean Deviation From Mode is %f\n", mean_deviation[5]);
+                    }
+
+                    else if (ser == 2)
+                    {
+                        mean_deviation = disc_mean_deviation(disc_ser, elm);
+
+                        printf("The Mean Deviation From Mean is %f\n", mean_deviation[0]);
+                        printf("The Coefficient of Mean Deviation From Mean is %f\n", mean_deviation[3]);
+
+                        printf("The Mean Deviation From Median is %f\n", mean_deviation[1]);
+                        printf("The Coefficient of Mean Deviation From Median is %f\n", mean_deviation[4]);
+
+                        printf("The Mean Deviation From Mode is %f\n", mean_deviation[2]);
+                        printf("The Coefficient of Mean Deviation From Mode is %f\n", mean_deviation[5]);
+                    }
+
+                    else if (ser == 3)
+                    {
+                        mean_deviation = con_mean_deviation(con_ser, elm);
+
+                        printf("The Mean Deviation From Mean is %f\n", mean_deviation[0]);
+                        printf("The Coefficient of Mean Deviation From Mean is %f\n", mean_deviation[3]);
+
+                        printf("The Mean Deviation From Median is %f\n", mean_deviation[1]);
+                        printf("The Coefficient of Mean Deviation From Median is %f\n", mean_deviation[4]);
+
+                        printf("Sorry Mean Deviation From Mode Can't be calculated right now!\n");
+                    }
+                    break;
+
+                case 11:
+                    if (ser == 1)
+                    {
+                        standard_deviation = ind_standard_deviation(ind_ser, elm);
+                        printf("The Standard Deviation is: %f\n", standard_deviation[0]);
+                        printf("The Coefficient of Standard Deviation is: %f\n", standard_deviation[1]);
+                    }
+                    else if (ser == 2)
+                    {
+                        standard_deviation = disc_standard_deviation(disc_ser, elm);
+                        printf("The Standard Deviation is: %f\n", standard_deviation[0]);
+                        printf("The Coefficient of Standard Deviation is: %f\n", standard_deviation[1]);
+                    }
+                    else if (ser == 3)
+                    {
+                        standard_deviation = con_standard_deviation(con_ser, elm);
+                        printf("The Standard Deviation is: %f\n", standard_deviation[0]);
+                        printf("The Coefficient of Standard Deviation is: %f\n", standard_deviation[1]);
+                    }
+                    break;
+
+                case 12:
+                    if (ser == 1)
+                    {
+                        standard_deviation = ind_standard_deviation(ind_ser, elm);
+                        printf("The Variance is: %f\n", standard_deviation[0] * standard_deviation[0]);
+                        printf("The Coefficient of SVarianceis: %f\n", standard_deviation[1]*100);
+                    }
+                    else if (ser == 2)
+                    {
+                        standard_deviation = disc_standard_deviation(disc_ser, elm);
+                        printf("The Variance is: %f\n", standard_deviation[0] * standard_deviation[0]);
+                        printf("The Coefficient of Variance is: %f\n", standard_deviation[1]*100);
+                    }
+                    else if (ser == 3)
+                    {
+                        standard_deviation = con_standard_deviation(con_ser, elm);
+                        printf("The Variance is: %f\n", standard_deviation[0] * standard_deviation[0]);
+                        printf("The Coefficient of Variance is: %f\n", standard_deviation[1]*100);
                     }
                     break;
 
